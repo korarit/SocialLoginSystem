@@ -38,6 +38,7 @@ function Register() {
     console.log(JSON.stringify(registerData));
 
     fetch("http://localhost:3000/signup", {
+      credentials: "include",
       method: "POST",
       headers: {
         Accept: "application/json",

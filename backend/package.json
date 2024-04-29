@@ -40,11 +40,13 @@
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "http-errors": "~1.6.3",
+    "jsonwebtoken": "^9.0.2",
     "mkdirp": "^1.0.4",
     "morgan": "~1.9.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pluralize": "^8.0.0",
-    "sqlite3": "^5.0.2"
+    "sqlite3": "^5.0.2",
+    "uuid": "^9.0.1"
   }
 }

@@ -23,7 +23,10 @@ var app = express();
 
 app.locals.pluralize = require('pluralize');
 
-app.use(cors())
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}))
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -33,10 +36,13 @@ app.use(session({
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: false,
-  store: new SQLiteStore({ db: 'sessions.db', dir: './var/db' })
+  store: new SQLiteStore({ db: 'sessions.db', dir: './var/db' }),
+  secure: false,
+  httpOnly: false,
 }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(passport.authenticate('session'));
-
 
 app.use('/', authRouter);
 

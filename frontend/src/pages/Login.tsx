@@ -10,7 +10,6 @@ function LoginPage() {
     const [user, setUser] = useState<string>('')
     const [password, setPassword] = useState<string>('')
 
-    const navigate = useNavigate()
     const login = () => {
 
         if(user === '' || password === ''){
@@ -19,6 +18,7 @@ function LoginPage() {
         }
 
         fetch("http://localhost:3000/login/password", {
+            credentials: "include",
             method: "POST",
             headers: {
                 Accept: "application/json",
@@ -27,12 +27,13 @@ function LoginPage() {
             body: JSON.stringify({
                 username: user,
                 password: password
-            })
-        }).then((response) => {
+              })
+        }).then(async (response) => {
             if (response.status === 200) {
-                navigate('/')
+                window.location.reload()
+            }else{
+                console.log(await response.json());
             }
-            throw new Error("login has been failed!");
         })
     }
 

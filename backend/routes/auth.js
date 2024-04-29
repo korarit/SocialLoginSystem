@@ -2,6 +2,10 @@ var express = require('express');
 var passport = require('passport');
 var LocalStrategy = require('passport-local');
 var crypto = require('crypto');
+
+const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require('uuid');
+
 var db = require('../db');
 var router = express.Router();
 
@@ -23,7 +27,6 @@ passport.use(new LocalStrategy(function verify(username, password, cb) {
 
 }));
 
-
 passport.serializeUser(function(user, cb) {
     process.nextTick(function() {
       cb(null, { id: user.id, username: user.username });
@@ -38,7 +41,7 @@ passport.deserializeUser(function(user, cb) {
   
 router.get("/login/success", (req, res) => {
 
-    if (req.user) {
+    if (req.isAuthenticated()) {
         res.status(200).json({
             success: true,
             message: "successfull",
@@ -46,7 +49,7 @@ router.get("/login/success", (req, res) => {
             //   cookies: req.cookies
         });
     }else{
-        res.status(404).json({
+        res.status(401).json({
             success: false,
             message: "failed",
             user: null,
@@ -58,17 +61,64 @@ router.get("/login/success", (req, res) => {
 });
   
   
-router.post('/login/password', passport.authenticate('local', {
-    successRedirect: CLIENT_URL,
-    failureRedirect: '/login'
-}));
+
+router.post('/login/password', function(req, res, next) {
+
+    passport.authenticate('local', function(err, user, info) {
+        console.log("user", req);
+        if (err) { return next(err); }
+        if (!user) { return res.status(401).json({ success: false, message: info.message }); }
+
+        req.login(user, function(err) {
+
+            if (err) { return next(err); }
+
+            console.log("user", user);
+
+            let token;
+            try{
+                token = jwt.sign(
+                    {
+                        username: user.username,
+                        uuid: uuidv4()
+                    },
+                    "secretkeyappearshere",
+                    { expiresIn: "30d" }
+                );
+
+            }catch(err){
+
+                console.log("error 4", err);
+                return res.status(500).json({
+                    success: false,
+                    message: "error can't create jwt token"
+                });
+
+            }
+
+            return res.status(200).json({ 
+                success: true, 
+                data: {
+                    username: user.username,
+                    firstname: user.firstname,
+                    lastname: user.lastname
+                }, 
+                message: "successfully logged in", 
+                token: token
+            });
+        });
+        })(req, res, next);
+    }
+);
 
 router.post('/logout', function(req, res, next) {
     req.logout(function(err) {
       if (err) { return next(err); }
       res.redirect(CLIENT_URL);
     });
-  });
+
+
+});
 
   
 router.post('/signup', function(req, res, next) {
@@ -105,10 +155,39 @@ router.post('/signup', function(req, res, next) {
                 success: false,
                 message: "error"
             })}
-          res.status(200).json({
-            success: true,
-            message: "successfully signed up"
-          });
+
+            let token;
+            try{
+                token = jwt.sign(
+                    {
+                        username: req.body.username,
+                        uuid: uuidv4()
+                    },
+                    "secretkeyappearshere",
+                    { expiresIn: "30d" }
+                );
+
+            }catch(err){
+
+                console.log("error 4", err);
+                return res.status(500).json({
+                    success: false,
+                    message: "error can't create jwt token"
+                });
+
+            }
+
+
+            res.status(200).json({
+                success: true,
+                message: "successfully signed up",
+                data: {
+                    username: req.body.username,
+                    firstname: req.body.firstname,
+                    lastname: req.body.lastname
+                },
+                token: token
+            });
         });
       });
     });
